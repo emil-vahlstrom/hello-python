@@ -17,6 +17,7 @@ spec:
   - name: git-credentials
     description: My ssh credentials
   tasks:
+
   - name: fetch-source
     taskRef:
       name: git-clone
@@ -30,6 +31,7 @@ spec:
       value: $(params.repo-url)
     - name: sslVerify
       value: false
+
   - name: show-readme
     runAfter: ["fetch-source"]
     taskRef:
@@ -37,8 +39,23 @@ spec:
     workspaces:
     - name: source
       workspace: shared-data
-  - name: build-and-push-image
+
+  - name: apply-manifests
     runAfter: ["show-readme"]
+    taskRef:
+      name: kubernetes-actions
+    workspaces:
+    - name: manifest-dir
+      workspace: shared-data
+    params:
+      - name: script
+        value: |
+          #!/usr/bin/env sh
+          echo "Applying manifests..."
+          kubectl apply -f manifests/app.yaml
+
+  - name: build-and-push-image
+    runAfter: ["apply-manifests"]
     taskRef:
       name: buildah
     workspaces:
@@ -46,13 +63,14 @@ spec:
       workspace: shared-data
     params:
     - name: IMAGE
-      value: 10.104.202.24:80/hello-python:latest
+      value: 10.104.202.24:80/hello-python-demo:latest
     - name: DOCKERFILE
       value: ./app/Dockerfile
     - name: TLSVERIFY
       value: false
     - name: SKIP_PUSH
       value: false
+
   - name: redeploy
     runAfter: ["build-and-push-image"]
     taskRef:

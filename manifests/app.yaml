@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: hello-python
-        image: 10.104.202.24:80/hello-python:latest
+        image: 10.104.202.24:80/hello-python-demo:latest
 #        image: hello-python:latest
         imagePullPolicy: Always
         ports:
