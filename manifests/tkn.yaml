@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: clone-read
+  name: build-deploy
 spec:
   description: | 
     This pipeline clones a git repo, then echoes the README file to the stout.
@@ -37,7 +37,7 @@ spec:
     workspaces:
     - name: source
       workspace: shared-data
-  - name: buildah-task
+  - name: build-and-push-image
     runAfter: ["show-readme"]
     taskRef:
       name: buildah
@@ -53,6 +53,15 @@ spec:
       value: false
     - name: SKIP_PUSH
       value: false
+  - name: redeploy
+    runAfter: ["build-and-push-image"]
+    taskRef:
+      name: kubernetes-actions
+    params:
+      - name: script
+        value: |
+          echo "Rolling out deployment..."
+          kubectl rollout restart deployment/hello-python
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
